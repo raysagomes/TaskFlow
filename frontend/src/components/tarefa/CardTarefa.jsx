@@ -13,9 +13,9 @@ import {
   Alert,
 } from "react-bootstrap";
 import { MdCheckBox, MdCheckBoxOutlineBlank } from "react-icons/md";
-import Comments from "./Comments";
+import Comments from "../tarefa/Comments";
 import { MdEdit, MdDelete } from "react-icons/md";
-import TaskHistory from "./TaskHistory";
+import TaskHistory from "../tarefa/TaskHistory";
 
 export default function TaskList({ boardId, user }) {
   const [tasks, setTasks] = useState([]);

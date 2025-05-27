@@ -1,7 +1,7 @@
 import React from "react";
 import Sidebar from "../components/Sidebar";
 import { IoPeople } from "react-icons/io5";
-import ProjectCards from "../components/ProjetosCardsPage";
+import ProjectCards from "../components/projetos/ProjetosCardsPage";
 import { useAuth } from "../context/AuthContext";
 
 export default function Projetos() {

@@ -41,7 +41,10 @@ export default function Inquilinos() {
       setForm({ email: "", password: "", first_name: "", last_name: "" });
       setShowForm(false);
     } catch (err) {
-      setMessage(err.response?.data?.error || "Erro ao adicionar membro");
+      setMessage(
+        err.response?.data?.error ||
+          "Erro ao adicionar membro, não pode adicionar se não for administrador."
+      );
     }
   };
 

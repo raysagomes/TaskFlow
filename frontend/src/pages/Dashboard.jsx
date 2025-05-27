@@ -7,7 +7,7 @@ import "../styles/dashboard.css";
 import Header from "../components/Header";
 import AvisoCard from "../components/AvisoCard";
 import LinkCards from "../components/LinkCards";
-import ProjectCards from "../components/ProjectCards";
+import ProjectCards from "../components/projetos/ProjectCards";
 
 export default function Dashboard() {
   const { user, logout } = useAuth();

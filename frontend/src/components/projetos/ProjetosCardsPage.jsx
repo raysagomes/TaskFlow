@@ -1,16 +1,18 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
-import TaskList from "./CardTarefa";
+import TaskList from "../tarefa/CardTarefa";
+import PaymentModule from "../PaymentModule";
 
 export default function ProjectCards({ user }) {
   const [projects, setProjects] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-
+  const [showPaymentForm, setShowPaymentForm] = useState(false);
   const [showForm, setShowForm] = useState(false);
   const [newProject, setNewProject] = useState({ name: "", description: "" });
   const [creating, setCreating] = useState(false);
   const [openedProjectId, setOpenedProjectId] = useState(null);
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
 
   useEffect(() => {
     if (user?.token) fetchProjects();
@@ -35,7 +37,6 @@ export default function ProjectCards({ user }) {
         console.error(err);
       });
   };
-
   const handleCreate = async (e) => {
     e.preventDefault();
     if (!newProject.name || !newProject.description) return;
@@ -44,25 +45,30 @@ export default function ProjectCards({ user }) {
     try {
       await axios.post(
         "http://localhost:3001/projects",
-        {
-          ...newProject,
-          entityId: user.entityId,
-        },
-        {
-          headers: {
-            Authorization: `Bearer ${user.token}`,
-          },
-        }
+        { ...newProject, entityId: user.entityId },
+        { headers: { Authorization: `Bearer ${user.token}` } }
       );
       setNewProject({ name: "", description: "" });
       setShowForm(false);
       fetchProjects();
     } catch (err) {
-      alert("Erro ao criar projeto.");
       console.error(err);
+      if (
+        err.response?.status === 403 &&
+        err.response.data?.needUpgrade === true
+      ) {
+        setShowUpgradeModal(true);
+      } else {
+        alert("Erro ao criar projeto.");
+      }
     } finally {
       setCreating(false);
     }
+  };
+
+  const handleUpgradeToPremium = () => {
+    alert("Fluxo de upgrade para usuário premium iniciado!");
+    setShowUpgradeModal(false);
   };
 
   if (loading) return <p className="loading">Carregando projetos...</p>;
@@ -72,7 +78,6 @@ export default function ProjectCards({ user }) {
     setOpenedProjectId((prevId) => (prevId === id ? null : id));
   };
 
-  
   return (
     <div className="project-cards-container">
       {showForm && user?.role === "admin" && (
@@ -122,7 +127,6 @@ export default function ProjectCards({ user }) {
             ) : (
               <p>{project.description?.substring(0, 100)}...</p>
             )}
-           
           </div>
         ))}
 
@@ -140,6 +144,82 @@ export default function ProjectCards({ user }) {
             >
               {showForm ? "Cancelar" : "Criar Projeto"}
             </button>
+          </div>
+        )}
+        {showUpgradeModal && (
+          <div
+            style={{
+              position: "fixed",
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              background: "rgba(0,0,0,0.5)",
+              display: "flex",
+              justifyContent: "center",
+              alignItems: "center",
+              zIndex: 1000,
+            }}
+          >
+            <div
+              style={{
+                background: "white",
+                padding: "2rem",
+                borderRadius: "8px",
+                maxWidth: "450px",
+                textAlign: "center",
+              }}
+            >
+              <h3>Upgrade para Premium</h3>
+              {!showPaymentForm ? (
+                <>
+                  <p>
+                    Você atingiu o limite de 5 projetos. Deseja virar usuário
+                    premium para criar mais projetos?
+                  </p>
+                  <button onClick={() => setShowPaymentForm(true)}>
+                    Sim, quero ser Premium
+                  </button>
+                  <br />
+                  <button
+                    style={{ marginTop: "1rem" }}
+                    onClick={() => setShowUpgradeModal(false)}
+                  >
+                    Cancelar
+                  </button>
+                </>
+              ) : (
+                <>
+                  <PaymentModule
+                    onPaymentSuccess={async () => {
+                      try {
+                        await axios.post(
+                          "http://localhost:3001/upgrade-to-premium",
+                          {},
+                          { headers: { Authorization: `Bearer ${user.token}` } }
+                        );
+                        alert("Você agora é um usuário premium!");
+                        setShowUpgradeModal(false);
+                        setShowPaymentForm(false);
+                        fetchProjects();
+                      } catch (error) {
+                        console.error(error);
+                        alert("Erro ao atualizar status premium.");
+                      }
+                    }}
+                  />
+                  <button
+                    style={{ marginTop: "1rem" }}
+                    onClick={() => {
+                      setShowPaymentForm(false);
+                      setShowUpgradeModal(false);
+                    }}
+                  >
+                    Cancelar
+                  </button>
+                </>
+              )}
+            </div>
           </div>
         )}
       </div>

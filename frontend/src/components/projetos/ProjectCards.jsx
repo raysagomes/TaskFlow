@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
-import "../styles/ProjectCards.css";
+import "../../styles/ProjectCards.css";
 
 export default function ProjectCards({ user }) {
   const [projects, setProjects] = useState([]);

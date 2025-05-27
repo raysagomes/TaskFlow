@@ -8,6 +8,7 @@ const multer = require("multer");
 const path = require("path");
 const { sendEmail, getTaskAssignedTemplate } = require("./utils/emailService");
 const cron = require("node-cron");
+const { body, validationResult } = require("express-validator");
 
 const app = express();
 app.use(cors());
@@ -81,46 +82,65 @@ app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 //   }
 // });
 
-app.post("/register", async (req, res) => {
-  const { first_name, last_name, email, password, role, newEntityName } =
-    req.body;
-
-  if (role !== "admin") {
-    return res.status(400).json({
-      error: "Somente administradores podem se registrar diretamente.",
-    });
-  }
-
-  if (!newEntityName || newEntityName.trim() === "") {
-    return res.status(400).json({
-      error: "Nome da nova entidade é obrigatório para administradores.",
-    });
-  }
-
-  try {
-    const [entityResult] = await db
-      .promise()
-      .query("INSERT INTO entities (name) VALUES (?)", [newEntityName.trim()]);
-    const associatedEntityId = entityResult.insertId;
-
-    const hash = await bcrypt.hash(password, 10);
-
-    await db
-      .promise()
-      .query(
-        `INSERT INTO users (first_name, last_name, email, password, role, entity_id) VALUES (?, ?, ?, ?, ?, ?)`,
-        [first_name, last_name, email, hash, "admin", associatedEntityId]
-      );
-
-    res.json({
-      message: "Usuário registrado e associado à entidade com sucesso",
-    });
-  } catch (err) {
-    if (err.code === "ER_DUP_ENTRY") {
-      return res.status(400).json({ error: "Email já está em uso" });
+app.post(
+  "/register",
+  [
+    body("email").isEmail().withMessage("Email inválido"),
+    body("first_name").notEmpty().withMessage("Primeiro nome é obrigatório"),
+    body("last_name").notEmpty().withMessage("Último nome é obrigatório"),
+    body("password")
+      .isLength({ min: 6 })
+      .withMessage("A senha deve ter pelo menos 6 caracteres"),
+    body("newEntityName")
+      .notEmpty()
+      .withMessage("Nome da nova entidade é obrigatório para administradores"),
+  ],
+  async (req, res) => {
+    const { first_name, last_name, email, password, role, newEntityName } =
+      req.body;
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
     }
-    return res.status(500).json({ error: "Erro ao registrar usuário" });
+
+    if (role !== "admin") {
+      return res.status(400).json({
+        error: "Somente administradores podem se registrar diretamente.",
+      });
+    }
+
+    try {
+      const [entityResult] = await db
+        .promise()
+        .query("INSERT INTO entities (name) VALUES (?)", [
+          newEntityName.trim(),
+        ]);
+      const associatedEntityId = entityResult.insertId;
+
+      const hash = await bcrypt.hash(password, 10);
+
+      await db
+        .promise()
+        .query(
+          `INSERT INTO users (first_name, last_name, email, password, role, entity_id) VALUES (?, ?, ?, ?, ?, ?)`,
+          [first_name, last_name, email, hash, "admin", associatedEntityId]
+        );
+
+      res.json({
+        message: "Usuário registrado e associado à entidade com sucesso",
+      });
+    } catch (err) {
+      if (err.code === "ER_DUP_ENTRY") {
+        return res.status(400).json({ error: "Email já está em uso" });
+      }
+      return res.status(500).json({ error: "Erro ao registrar usuário" });
+    }
   }
+);
+
+// Inicie o servidor
+app.listen(3000, () => {
+  console.log("Servidor rodando na porta 3000");
 });
 
 // Login
@@ -352,6 +372,32 @@ app.post("/projects", authenticateToken, async (req, res) => {
   }
 
   try {
+    const [userRows] = await db
+      .promise()
+      .query("SELECT premium FROM users WHERE id = ?", [userId]);
+
+    if (userRows.length === 0) {
+      return res.status(404).json({ error: "Usuário não encontrado" });
+    }
+
+    const isPremium = userRows[0].premium;
+
+    if (!isPremium) {
+      const [projectCountRows] = await db
+        .promise()
+        .query("SELECT COUNT(*) as count FROM boards WHERE entity_id = ?", [
+          userEntityId,
+        ]);
+
+      const projectCount = projectCountRows[0].count;
+
+      if (projectCount >= 5) {
+        return res.status(403).json({
+          error: "Limite de 5 projetos atingido para usuários não premium",
+          needUpgrade: true,
+        });
+      }
+    }
     const [result] = await db.promise().query(
       `INSERT INTO boards (title, description, entity_id, created_by, created_at, updated_at) 
        VALUES (?, ?, ?, ?, NOW(), NOW())`,
@@ -602,7 +648,6 @@ app.put("/tasks/:id", authenticateToken, async (req, res) => {
 
     const changes = [];
 
-    // Comparações simples, tratando due_date com formato ISO
     if (title !== currentTask.title) {
       changes.push({
         field: "title",
@@ -632,7 +677,6 @@ app.put("/tasks/:id", authenticateToken, async (req, res) => {
       });
     }
 
-    // Para due_date, converter para string MySQL para comparar corretamente
     const currentDueDateFormatted = currentTask.due_date
       ? formatDateForMySQL(currentTask.due_date)
       : null;
@@ -752,6 +796,19 @@ app.put("/:id/uncomplete", async (req, res) => {
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: "Erro ao desmarcar tarefa" });
+  }
+});
+
+app.post("/upgrade-to-premium", authenticateToken, async (req, res) => {
+  const userId = req.user.id;
+  try {
+    await db
+      .promise()
+      .query("UPDATE users SET premium = 1 WHERE id = ?", [userId]);
+    res.json({ success: true, message: "Usuário atualizado para premium" });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Erro ao atualizar usuário para premium" });
   }
 });
 

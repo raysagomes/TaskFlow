@@ -746,6 +746,43 @@ app.get("/tasks/:id/history", async (req, res) => {
   }
 });
 
+app.put("/update-password", authenticateToken, async (req, res) => {
+  const userId = req.user.id;
+  const { currentPassword, newPassword } = req.body;
+
+  if (!currentPassword || !newPassword) {
+    return res
+      .status(400)
+      .json({ error: "Senha atual e nova senha são obrigatórias" });
+  }
+
+  try {
+    const [userResult] = await db
+      .promise()
+      .query("SELECT password FROM users WHERE id = ?", [userId]);
+    const user = userResult[0];
+
+    const isMatch = await bcrypt.compare(currentPassword, user.password);
+    if (!isMatch) {
+      return res.status(401).json({ error: "Senha atual incorreta" });
+    }
+
+    const hashedNewPassword = await bcrypt.hash(newPassword, 10);
+
+    await db
+      .promise()
+      .query("UPDATE users SET password = ? WHERE id = ?", [
+        hashedNewPassword,
+        userId,
+      ]);
+
+    res.json({ message: "Senha atualizada com sucesso!" });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Erro ao atualizar a senha" });
+  }
+});
+
 app.get("/me", authenticateToken, async (req, res) => {
   try {
     const userId = req.user.id;

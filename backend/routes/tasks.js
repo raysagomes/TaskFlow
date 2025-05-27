@@ -142,6 +142,7 @@ router.post("/boards/:boardId/tasks", authenticateToken, async (req, res) => {
         //   email,
         //   `Nova tarefa atribuída: ${title}`,
         //   `Olá ${nome},\n\nVocê foi designado para a tarefa: "${title}".\nDescrição: ${description}.`,
+        //   `Esse email foi enviado automaticamente pelo sistema TaskFlow, por motivos de teste, por favor ignore. \n\nObrigado!`,
         //   html
         // );
       }

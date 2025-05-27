@@ -75,7 +75,7 @@ export default function PaymentModule({ onPaymentSuccess }) {
             onChange={(e) => setCardNumber(e.target.value.replace(/\D/g, ""))}
             onFocus={() => setFocusedField("cardNumber")}
             onBlur={() => setFocusedField(null)}
-            placeholder="1234123412341234"
+            placeholder="1234 1234 1234 1234"
             required
           />
           {renderHint("cardNumber")}

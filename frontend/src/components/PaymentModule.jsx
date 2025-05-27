@@ -1,4 +1,15 @@
 import React, { useState } from "react";
+import {
+  Form,
+  Button,
+  Alert,
+  Spinner,
+  Container,
+  Row,
+  Col,
+  OverlayTrigger,
+  Tooltip,
+} from "react-bootstrap";
 
 export default function PaymentModule({ onPaymentSuccess }) {
   const [cardNumber, setCardNumber] = useState("");
@@ -45,72 +56,96 @@ export default function PaymentModule({ onPaymentSuccess }) {
     expiry: "Formato MM/AA. Ex: 12/26",
     cvv: "Os 3 dígitos no verso do cartão.",
   };
+
+  const renderHint = (field) =>
+    focusedField === field && (
+      <Form.Text className="text-muted">{fieldHints[field]}</Form.Text>
+    );
+
   return (
-    <form onSubmit={handlePayment}>
-      <div>
-        <label>Número do Cartão:</label>
-        <input
-          type="text"
-          maxLength="16"
-          value={cardNumber}
-          onChange={(e) => setCardNumber(e.target.value.replace(/\D/g, ""))}
-          onFocus={() => setFocusedField("cardNumber")}
-          onBlur={() => setFocusedField(null)}
-          placeholder="1234123412341234"
-          required
-        />
-        {focusedField === "cardNumber" && <p>{fieldHints.cardNumber}</p>}
-      </div>
+    <Container>
+      <h3 className="mb-4">Pagamento Premium</h3>
+      <Form onSubmit={handlePayment}>
+        <Form.Group className="mb-3">
+          <Form.Label>Número do Cartão</Form.Label>
+          <Form.Control
+            type="text"
+            maxLength="16"
+            value={cardNumber}
+            onChange={(e) => setCardNumber(e.target.value.replace(/\D/g, ""))}
+            onFocus={() => setFocusedField("cardNumber")}
+            onBlur={() => setFocusedField(null)}
+            placeholder="1234123412341234"
+            required
+          />
+          {renderHint("cardNumber")}
+        </Form.Group>
 
-      <div>
-        <label>Nome no Cartão:</label>
-        <input
-          type="text"
-          value={cardName}
-          onChange={(e) => setCardName(e.target.value)}
-          onFocus={() => setFocusedField("cardName")}
-          onBlur={() => setFocusedField(null)}
-          placeholder="Seu nome"
-          required
-        />
-        {focusedField === "cardName" && <p>{fieldHints.cardName}</p>}
-      </div>
+        <Form.Group className="mb-3">
+          <Form.Label>Nome no Cartão</Form.Label>
+          <Form.Control
+            type="text"
+            value={cardName}
+            onChange={(e) => setCardName(e.target.value)}
+            onFocus={() => setFocusedField("cardName")}
+            onBlur={() => setFocusedField(null)}
+            placeholder="Seu nome"
+            required
+          />
+          {renderHint("cardName")}
+        </Form.Group>
 
-      <div>
-        <label>Validade (MM/AA):</label>
-        <input
-          type="text"
-          maxLength="5"
-          value={expiry}
-          onChange={(e) => setExpiry(e.target.value)}
-          onFocus={() => setFocusedField("expiry")}
-          onBlur={() => setFocusedField(null)}
-          placeholder="12/25"
-          required
-        />
-        {focusedField === "expiry" && <p>{fieldHints.expiry}</p>}
-      </div>
+        <Row>
+          <Col md={6}>
+            <Form.Group className="mb-3">
+              <Form.Label>Validade (MM/AA)</Form.Label>
+              <Form.Control
+                type="text"
+                maxLength="5"
+                value={expiry}
+                onChange={(e) => setExpiry(e.target.value)}
+                onFocus={() => setFocusedField("expiry")}
+                onBlur={() => setFocusedField(null)}
+                placeholder="12/25"
+                required
+              />
+              {renderHint("expiry")}
+            </Form.Group>
+          </Col>
+          <Col md={6}>
+            <Form.Group className="mb-3">
+              <Form.Label>CVV</Form.Label>
+              <Form.Control
+                type="password"
+                maxLength="3"
+                value={cvv}
+                onChange={(e) => setCvv(e.target.value.replace(/\D/g, ""))}
+                onFocus={() => setFocusedField("cvv")}
+                onBlur={() => setFocusedField(null)}
+                placeholder="123"
+                required
+              />
+              {renderHint("cvv")}
+            </Form.Group>
+          </Col>
+        </Row>
 
-      <div>
-        <label>CVV:</label>
-        <input
-          type="password"
-          maxLength="3"
-          value={cvv}
-          onChange={(e) => setCvv(e.target.value.replace(/\D/g, ""))}
-          onFocus={() => setFocusedField("cvv")}
-          onBlur={() => setFocusedField(null)}
-          placeholder="123"
-          required
-        />
-        {focusedField === "cvv" && <p>{fieldHints.cvv}</p>}
-      </div>
+        {error && (
+          <Alert variant="danger" className="mt-2">
+            {error}
+          </Alert>
+        )}
 
-      {error && <p style={{ color: "red" }}>{error}</p>}
-
-      <button type="submit" disabled={loading}>
-        {loading ? "Processando..." : "Pagar e Ativar Premium"}
-      </button>
-    </form>
+        <Button type="submit" variant="primary" disabled={loading}>
+          {loading ? (
+            <>
+              <Spinner animation="border" size="sm" /> Processando...
+            </>
+          ) : (
+            "Pagar e Ativar Premium"
+          )}
+        </Button>
+      </Form>
+    </Container>
   );
 }

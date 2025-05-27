@@ -138,12 +138,6 @@ app.post(
   }
 );
 
-// Inicie o servidor
-app.listen(3000, () => {
-  console.log("Servidor rodando na porta 3000");
-});
-
-// Login
 app.post("/login", (req, res) => {
   const { email, password } = req.body;
 
@@ -596,12 +590,12 @@ app.post("/boards/:boardId/tasks", authenticateToken, async (req, res) => {
           descricao: description,
         });
 
-        await sendEmail(
-          email,
-          `Nova tarefa atribuída: ${title}`,
-          `Olá ${nome},\n\nVocê foi designado para a tarefa: "${title}".\nDescrição: ${description}.`,
-          html
-        );
+        // await sendEmail(
+        //   email,
+        //   `Nova tarefa atribuída: ${title}`,
+        //   `Olá ${nome},\n\nVocê foi designado para a tarefa: "${title}".\nDescrição: ${description}.`,
+        //   html
+        // );
       }
     }
 
@@ -619,6 +613,7 @@ function formatDateForMySQL(isoDate) {
   const adjustedDate = new Date(date.getTime() - offset * 60 * 1000);
   return adjustedDate.toISOString().slice(0, 19).replace("T", " ");
 }
+
 app.put("/tasks/:id", authenticateToken, async (req, res) => {
   const { id } = req.params;
   const {

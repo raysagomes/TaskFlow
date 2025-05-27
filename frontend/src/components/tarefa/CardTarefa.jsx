@@ -125,10 +125,9 @@ export default function TaskList({ boardId, user }) {
         );
       } else {
         const response = await axios.post(
-          "http://localhost:3001/tasks",
+          `http://localhost:3001/boards/${boardId}/tasks`,
           {
             ...newTask,
-            // Removido user_id — backend já pega do token
           },
           config
         );
@@ -454,14 +453,15 @@ export default function TaskList({ boardId, user }) {
 
                 <div>
                   <strong>{task.title}</strong> -{" "}
-                  {task.description.length > 50
+                  {task.description && task.description.length > 50
                     ? task.description.substring(0, 50) + "..."
-                    : task.description}
+                    : task.description || ""}
                 </div>
               </Accordion.Header>
               <Accordion.Body>
                 <Card.Text>
-                  <strong>Status:</strong> {task.status.replace("_", " ")}
+                  <strong>Status:</strong>{" "}
+                  {task.status ? task.status.replace("_", " ") : "Sem status"}
                 </Card.Text>
                 <Card.Text>
                   <strong>Responsável:</strong>{" "}

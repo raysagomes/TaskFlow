@@ -126,7 +126,7 @@ npm run dev
 * **Variáveis de ambiente** devem ser mantidas seguras e não versionadas.
 
 ---
-gg
+
 ## 📄 Licença
 
 Este projeto está sob a licença ISC. Consulte o arquivo [LICENSE](./LICENSE) para mais detalhes.

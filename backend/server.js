@@ -844,5 +844,54 @@ app.post("/upgrade-to-premium", authenticateToken, async (req, res) => {
   }
 });
 
+app.delete("/tasks/:id", async (req, res) => {
+  const taskId = req.params.id;
+
+  db.beginTransaction((err) => {
+    if (err) return res.status(500).json({ error: "Erro na transação" });
+
+    db.query(
+      "DELETE FROM task_history WHERE task_id = ?",
+      [taskId],
+      (error) => {
+        if (error) {
+          return db.rollback(() => {
+            res.status(500).json({ error: "Erro ao excluir histórico" });
+          });
+        }
+
+        db.query(
+          "DELETE FROM tasks WHERE id = ?",
+          [taskId],
+          (error, results) => {
+            if (error) {
+              return db.rollback(() => {
+                res.status(500).json({ error: "Erro ao excluir a tarefa" });
+              });
+            }
+
+            if (results.affectedRows === 0) {
+              return db.rollback(() => {
+                res.status(404).json({ error: "Tarefa não encontrada" });
+              });
+            }
+
+            db.commit((err) => {
+              if (err) {
+                return db.rollback(() => {
+                  res
+                    .status(500)
+                    .json({ error: "Erro ao confirmar a exclusão" });
+                });
+              }
+              res.status(200).json({ message: "Tarefa excluída com sucesso" });
+            });
+          }
+        );
+      }
+    );
+  });
+});
+
 const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => console.log(`Servidor rodando na porta ${PORT}`));

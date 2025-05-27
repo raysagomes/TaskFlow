@@ -16,6 +16,8 @@ import { MdCheckBox, MdCheckBoxOutlineBlank } from "react-icons/md";
 import Comments from "../tarefa/Comments";
 import { MdEdit, MdDelete } from "react-icons/md";
 import TaskHistory from "../tarefa/TaskHistory";
+import TaskForm from "./TaskForm";
+import TaskItem from "./TaskItem";
 
 export default function TaskList({ boardId, user }) {
   const [tasks, setTasks] = useState([]);
@@ -220,6 +222,11 @@ export default function TaskList({ boardId, user }) {
     if (!window.confirm("Tem certeza que deseja excluir esta tarefa?")) return;
 
     try {
+      const confirmDelete = window.confirm(
+        "Tem certeza que deseja excluir esta tarefa?"
+      );
+      if (!confirmDelete) return;
+
       await axios.delete(`http://localhost:3001/tasks/${taskId}`);
       setTasks((prev) => prev.filter((task) => task.id !== taskId));
     } catch (error) {
@@ -237,18 +244,14 @@ export default function TaskList({ boardId, user }) {
   return (
     <div onClick={(e) => e.stopPropagation()}>
       <h4>Tarefas do Quadro</h4>
-      <div className="mb-3">
-        <strong>Progresso do Projeto:</strong>
-        <ProgressBar
-          now={calculateProgress()}
-          label={`${calculateProgress()}%`}
-        />
-      </div>
+      <ProgressBar
+        now={calculateProgress()}
+        label={`${calculateProgress()}%`}
+      />
       {user?.role === "admin" && !showTaskForm && (
         <Button
-          className="mb-3 create-btn"
-          onClick={(e) => {
-            e.stopPropagation();
+          className="my-3"
+          onClick={() => {
             setNewTask({
               title: "",
               description: "",
@@ -263,243 +266,40 @@ export default function TaskList({ boardId, user }) {
           Criar Tarefa
         </Button>
       )}
-
       {showTaskForm && (
-        <Card className="mb-4">
-          <Card.Body>
-            <Form
-              onSubmit={handleSaveTask}
-              onClick={(e) => e.stopPropagation()}
-            >
-              <Form.Group controlId="taskTitle" className="mb-3">
-                <Form.Label>Título da tarefa</Form.Label>
-                <Form.Control
-                  type="text"
-                  placeholder="Título da tarefa"
-                  value={newTask.title}
-                  onChange={(e) =>
-                    setNewTask({ ...newTask, title: e.target.value })
-                  }
-                  required
-                  disabled={creatingTask}
-                />
-              </Form.Group>
-              <Form.Group controlId="taskDescription" className="mb-3">
-                <Form.Label>Descrição da tarefa</Form.Label>
-                <Form.Control
-                  as="textarea"
-                  rows={3}
-                  placeholder="Descrição da tarefa"
-                  value={newTask.description}
-                  onChange={(e) =>
-                    setNewTask({ ...newTask, description: e.target.value })
-                  }
-                  required
-                  disabled={creatingTask}
-                />
-              </Form.Group>
-              <Row className="mb-3">
-                <Col md={4}>
-                  <Form.Group controlId="taskStatus">
-                    <Form.Label>Status</Form.Label>
-                    <Form.Select
-                      value={newTask.status}
-                      onChange={(e) =>
-                        setNewTask({ ...newTask, status: e.target.value })
-                      }
-                      disabled={creatingTask}
-                    >
-                      <option value="todo">A fazer</option>
-                      <option value="in_progress">Em andamento</option>
-                      <option value="done">Concluído</option>
-                    </Form.Select>
-                  </Form.Group>
-                </Col>
-
-                <Col md={4}>
-                  <Form.Group controlId="taskAssignedTo">
-                    <Form.Label>Responsável</Form.Label>
-                    {loadingMembers ? (
-                      <div>
-                        <Spinner animation="border" size="sm" /> Carregando
-                        membros...
-                      </div>
-                    ) : errorMembers ? (
-                      <Alert variant="danger">{errorMembers}</Alert>
-                    ) : members.length === 0 ? (
-                      <p className="text-warning">
-                        Nenhum membro da equipe adicionado!
-                      </p>
-                    ) : (
-                      <Form.Select
-                        value={newTask.assigned_to}
-                        onChange={(e) =>
-                          setNewTask({
-                            ...newTask,
-                            assigned_to: e.target.value,
-                          })
-                        }
-                        disabled={creatingTask}
-                      >
-                        <option value="">-- Selecione um membro --</option>
-                        {members.map((member) => (
-                          <option key={member.id} value={member.id}>
-                            {member.name}
-                          </option>
-                        ))}
-                      </Form.Select>
-                    )}
-                  </Form.Group>
-                </Col>
-
-                <Col md={4}>
-                  <Form.Group controlId="taskDueDate">
-                    <Form.Label>Data de vencimento</Form.Label>
-                    <Form.Control
-                      type="date"
-                      value={newTask.due_date}
-                      onChange={(e) =>
-                        setNewTask({ ...newTask, due_date: e.target.value })
-                      }
-                      disabled={creatingTask}
-                    />
-                  </Form.Group>
-                </Col>
-              </Row>
-              <Button variant="primary" type="submit" disabled={creatingTask}>
-                {creatingTask ? (
-                  <>
-                    <Spinner
-                      as="span"
-                      animation="border"
-                      size="sm"
-                      role="status"
-                      aria-hidden="true"
-                    />{" "}
-                    {editingTaskId ? "Salvando..." : "Criando..."}
-                  </>
-                ) : editingTaskId ? (
-                  "Salvar alterações"
-                ) : (
-                  "Criar tarefa"
-                )}
-              </Button>{" "}
-              <Button
-                variant="secondary"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setShowTaskForm(false);
-                  setEditingTaskId(null);
-                }}
-                disabled={creatingTask}
-              >
-                Cancelar
-              </Button>
-            </Form>
-          </Card.Body>
-        </Card>
+        <TaskForm
+          {...{
+            newTask,
+            setNewTask,
+            handleSaveTask,
+            creatingTask,
+            editingTaskId,
+            setShowTaskForm,
+            setEditingTaskId,
+            loadingMembers,
+            errorMembers,
+            members,
+          }}
+        />
       )}
-
-      {tasks.length === 0 ? (
-        <p className="text-muted">Nenhuma tarefa encontrada.</p>
-      ) : (
-        <Accordion activeKey={activeKey}>
-          {tasksState.map((task) => (
-            <Accordion.Item eventKey={task.id} key={task.id}>
-              <Accordion.Header
-                onClick={() => toggleAccordion(task.id)}
-                className="d-flex align-items-center"
-              >
-                <span
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    toggleComplete(task.id);
-                  }}
-                  style={{
-                    cursor: "pointer",
-                    fontSize: "1.2rem",
-                    marginRight: "8px",
-                    borderRadius: "50%",
-                    width: "24px",
-                    height: "24px",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    backgroundColor:
-                      task.status === "done" ? "#4CAF50" : "transparent",
-                    color: task.status === "done" ? "white" : "gray",
-                    transition: "background-color 0.3s, color 0.3s",
-                  }}
-                  aria-label={
-                    task.status === "done"
-                      ? "Marcar como pendente"
-                      : "Marcar como concluído"
-                  }
-                  role="button"
-                  tabIndex={0}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter" || e.key === " ") {
-                      e.stopPropagation();
-                      toggleComplete(task.id);
-                    }
-                  }}
-                >
-                  {task.status === "done" ? (
-                    <MdCheckBox />
-                  ) : (
-                    <MdCheckBoxOutlineBlank />
-                  )}
-                </span>
-
-                <div>
-                  <strong>{task.title}</strong> -{" "}
-                  {task.description && task.description.length > 50
-                    ? task.description.substring(0, 50) + "..."
-                    : task.description || ""}
-                </div>
-              </Accordion.Header>
-              <Accordion.Body>
-                <Card.Text>
-                  <strong>Status:</strong>{" "}
-                  {task.status ? task.status.replace("_", " ") : "Sem status"}
-                </Card.Text>
-                <Card.Text>
-                  <strong>Responsável:</strong>{" "}
-                  {getMemberNameById(task.assigned_to)}
-                </Card.Text>
-                <Card.Text>
-                  <strong>Vencimento:</strong> {formatDate(task.due_date)}
-                </Card.Text>
-                <div className="d-flex justify-content-end gap-2 mt-3">
-                  <Button
-                    variant="outline-primary"
-                    size="sm"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleEditTask(task);
-                    }}
-                  >
-                    <MdEdit /> Editar
-                  </Button>
-                  <Button
-                    variant="outline-danger"
-                    size="sm"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleDeleteTask(task.id);
-                    }}
-                  >
-                    <MdDelete /> Excluir
-                  </Button>
-                </div>
-
-                <Comments taskId={task.id} user={user} />
-                <TaskHistory taskId={task.id} />
-              </Accordion.Body>
-            </Accordion.Item>
+      <Accordion activeKey={activeKey}>
+        {tasksState
+          .filter((task) => task.status !== "in_progress")
+          .map((task) => (
+            <TaskItem
+              key={task.id}
+              task={task}
+              toggleAccordion={toggleAccordion}
+              activeKey={activeKey}
+              toggleComplete={toggleComplete}
+              getMemberNameById={getMemberNameById}
+              formatDate={formatDate}
+              handleEditTask={handleEditTask}
+              handleDeleteTask={handleDeleteTask}
+              user={user}
+            />
           ))}
-        </Accordion>
-      )}
+      </Accordion>
     </div>
   );
 }

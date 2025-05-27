@@ -1,8 +1,12 @@
 import React, { useEffect, useState } from "react";
 import { FiPlus } from "react-icons/fi";
-import axios from "axios";
-import { useAuth } from "../context/AuthContext";
 import { FaTrash } from "react-icons/fa";
+import { useAuth } from "../context/AuthContext";
+
+const mockAvisos = [
+  { id: 1, message: "Reunião na sexta-feira às 14h" },
+  { id: 2, message: "Entrega de relatórios até amanhã" },
+];
 
 export default function AvisoCard() {
   const { user } = useAuth();
@@ -11,46 +15,27 @@ export default function AvisoCard() {
   const [newMessage, setNewMessage] = useState("");
 
   useEffect(() => {
-    if (!user?.entityId) return;
-
-    axios
-      .get(`http://localhost:3001/notices/${user.entityId}`, {
-        headers: { Authorization: `Bearer ${user.token}` },
-      })
-      .then((res) => setNotices(res.data))
-      .catch(console.error);
-  }, [user]);
+    const timeout = setTimeout(() => {
+      setNotices(mockAvisos);
+    }, 500);
+    return () => clearTimeout(timeout);
+  }, []);
 
   function handleAddNotice() {
     if (!newMessage.trim()) return;
 
-    axios
-      .post(
-        `http://localhost:3001/notices`,
-        {
-          entityId: user.entityId,
-          message: newMessage,
-        },
-        {
-          headers: { Authorization: `Bearer ${user.token}` },
-        }
-      )
-      .then((res) => {
-        setNotices((prev) => [res.data, ...prev]);
-        setNewMessage("");
-        setShowInput(false);
-      })
-      .catch(console.error);
+    const novoAviso = {
+      id: Date.now(),
+      message: newMessage,
+    };
+
+    setNotices((prev) => [novoAviso, ...prev]);
+    setNewMessage("");
+    setShowInput(false);
   }
+
   function handleDeleteNotice(id) {
-    axios
-      .delete(`http://localhost:3001/notices/${id}`, {
-        headers: { Authorization: `Bearer ${user.token}` },
-      })
-      .then(() => {
-        setNotices((prev) => prev.filter((n) => n.id !== id));
-      })
-      .catch(console.error);
+    setNotices((prev) => prev.filter((n) => n.id !== id));
   }
 
   return (

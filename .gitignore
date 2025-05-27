@@ -1,0 +1,31 @@
+# Ignora pastas node_modules tanto no frontend quanto no backend
+frontend/node_modules/
+backend/node_modules/
+
+# Ignora arquivos de build
+frontend/build/
+backend/dist/
+frontend/.next/
+backend/.next/
+
+# Ignora arquivos .env
+frontend/.env
+backend/.env
+
+node_modules/
+# Logs
+*.log
+
+# Cache e pastas temporárias
+.cache/
+*.tmp
+
+# Sistema operacional
+.DS_Store
+Thumbs.db
+
+# VSCode
+.vscode/
+
+# Coverage reports
+coverage/

@@ -77,7 +77,6 @@ export default function ProjectCards({ user }) {
   const toggleOpenProject = (id) => {
     setOpenedProjectId((prevId) => (prevId === id ? null : id));
   };
-
   return (
     <div className="project-cards-container">
       {showForm && user?.role === "admin" && (
@@ -109,13 +108,30 @@ export default function ProjectCards({ user }) {
         <p className="no-projects-message">Nenhum projeto encontrado.</p>
       )}
 
-      <div>
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(2, 1fr)",
+          gap: "1.5rem",
+        }}
+      >
         {projects.map((project) => (
           <div
             key={project.id}
             className="project-card"
             onClick={() => toggleOpenProject(project.id)}
-            style={{ cursor: "pointer", marginBottom: "1.5rem" }}
+            style={{
+              cursor: "pointer",
+              gridColumn: openedProjectId === project.id ? "span 2" : "auto",
+              padding: "1rem",
+              border: "1px solid #ccc",
+              borderRadius: "8px",
+              backgroundColor: "#fff",
+              boxShadow: "0 2px 5px rgba(0,0,0,0.1)",
+              transition: "all 0.3s ease",
+              minHeight: "220px",
+              minWidth: "300px",
+            }}
           >
             <h3>{project.title}</h3>
             {openedProjectId === project.id ? (
@@ -129,100 +145,96 @@ export default function ProjectCards({ user }) {
             )}
           </div>
         ))}
+      </div>
 
-        {user?.role === "admin" && (
+      {user?.role === "admin" && (
+        <div style={{ marginTop: "3rem", textAlign: "center" }}>
+          <button
+            onClick={() => setShowForm((prev) => !prev)}
+            className="create-btn"
+            style={{ padding: "10px 20px", fontSize: "16px" }}
+          >
+            {showForm ? "Cancelar" : "Criar Projeto"}
+          </button>
+        </div>
+      )}
+
+      {showUpgradeModal && (
+        <div
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: "rgba(0,0,0,0.5)",
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            zIndex: 1000,
+          }}
+        >
           <div
             style={{
-              marginTop: "3rem",
+              background: "white",
+              padding: "2rem",
+              borderRadius: "8px",
+              maxWidth: "550px",
               textAlign: "center",
             }}
           >
-            <button
-              onClick={() => setShowForm((prev) => !prev)}
-              className="create-btn"
-              style={{ padding: "10px 20px", fontSize: "16px" }}
-            >
-              {showForm ? "Cancelar" : "Criar Projeto"}
-            </button>
-          </div>
-        )}
-        {showUpgradeModal && (
-          <div
-            style={{
-              position: "fixed",
-              top: 0,
-              left: 0,
-              right: 0,
-              bottom: 0,
-              background: "rgba(0,0,0,0.5)",
-              display: "flex",
-              justifyContent: "center",
-              alignItems: "center",
-              zIndex: 1000,
-            }}
-          >
-            <div
-              style={{
-                background: "white",
-                padding: "2rem",
-                borderRadius: "8px",
-                maxWidth: "450px",
-                textAlign: "center",
-              }}
-            >
-              <h3>Upgrade para Premium</h3>
-              {!showPaymentForm ? (
-                <>
-                  <p>
-                    Você atingiu o limite de 5 projetos. Deseja virar usuário
-                    premium para criar mais projetos?
-                  </p>
-                  <button onClick={() => setShowPaymentForm(true)}>
-                    Sim, quero ser Premium
-                  </button>
-                  <br />
-                  <button
-                    style={{ marginTop: "1rem" }}
-                    onClick={() => setShowUpgradeModal(false)}
-                  >
-                    Cancelar
-                  </button>
-                </>
-              ) : (
-                <>
-                  <PaymentModule
-                    onPaymentSuccess={async () => {
-                      try {
-                        await axios.post(
-                          "http://localhost:3001/upgrade-to-premium",
-                          {},
-                          { headers: { Authorization: `Bearer ${user.token}` } }
-                        );
-                        alert("Você agora é um usuário premium!");
-                        setShowUpgradeModal(false);
-                        setShowPaymentForm(false);
-                        fetchProjects();
-                      } catch (error) {
-                        console.error(error);
-                        alert("Erro ao atualizar status premium.");
-                      }
-                    }}
-                  />
-                  <button
-                    style={{ marginTop: "1rem" }}
-                    onClick={() => {
-                      setShowPaymentForm(false);
+            <h3>Upgrade para Premium</h3>
+            {!showPaymentForm ? (
+              <>
+                <p>
+                  Você atingiu o limite de 5 projetos. Deseja virar usuário
+                  premium para criar mais projetos?
+                </p>
+                <button onClick={() => setShowPaymentForm(true)}>
+                  Sim, quero ser Premium
+                </button>
+                <br />
+                <button
+                  style={{ marginTop: "1rem" }}
+                  onClick={() => setShowUpgradeModal(false)}
+                >
+                  Cancelar
+                </button>
+              </>
+            ) : (
+              <>
+                <PaymentModule
+                  onPaymentSuccess={async () => {
+                    try {
+                      await axios.post(
+                        "http://localhost:3001/users/upgrade-to-premium",
+                        {},
+                        { headers: { Authorization: `Bearer ${user.token}` } }
+                      );
+                      alert("Você agora é um usuário premium!");
                       setShowUpgradeModal(false);
-                    }}
-                  >
-                    Cancelar
-                  </button>
-                </>
-              )}
-            </div>
+                      setShowPaymentForm(false);
+                      fetchProjects();
+                    } catch (error) {
+                      console.error(error);
+                      alert("Erro ao atualizar status premium.");
+                    }
+                  }}
+                />
+                <button
+                  style={{ marginTop: "1rem" }}
+                  onClick={() => {
+                    setShowPaymentForm(false);
+                    setShowUpgradeModal(false);
+                  }}
+                >
+                  Cancelar
+                </button>
+              </>
+            )}
           </div>
-        )}
-      </div>
+        </div>
+      )}
     </div>
   );
 }

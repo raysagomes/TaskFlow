@@ -85,7 +85,7 @@ export default function TaskList({ boardId, user }) {
     setLoadingMembers(true);
     setErrorMembers(null);
     axios
-      .get(`http://localhost:3001/entities/${user.entityId}/members`, {
+      .get(`http://localhost:3001/users/entities/${user.entityId}/members`, {
         headers: { Authorization: `Bearer ${user.token}` },
       })
       .then((res) => {

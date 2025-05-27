@@ -9,7 +9,7 @@ export default function Membros() {
   useEffect(() => {
     const token = localStorage.getItem("token");
 
-    fetch("http://localhost:3001/members", {
+    fetch("http://localhost:3001/users/members", {
       headers: {
         Authorization: `Bearer ${token}`,
       },

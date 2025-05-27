@@ -44,7 +44,7 @@ export default function Register() {
         newEntityName: form.newEntityName.trim(),
       };
 
-      await axios.post("http://localhost:3001/register", payload);
+      await axios.post("http://localhost:3001/auth/register", payload);
 
       navigate("/login");
     } catch (err) {

@@ -28,7 +28,7 @@ export default function Inquilinos() {
       const token = localStorage.getItem("token");
 
       const response = await axios.post(
-        "http://localhost:3001/create-member",
+        "http://localhost:3001/users/create-member",
         form,
         {
           headers: {

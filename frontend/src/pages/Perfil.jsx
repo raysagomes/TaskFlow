@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import Sidebar from "../components/Sidebar";
 import { FaUser } from "react-icons/fa";
+import PaymentModule from "../components/PaymentModule";
 
 function Perfil() {
   const [user, setUser] = useState({
@@ -12,13 +13,14 @@ function Perfil() {
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [message, setMessage] = useState("");
+  const [showPaymentForm, setShowPaymentForm] = useState(false);
 
   const token = localStorage.getItem("token");
 
   useEffect(() => {
     const fetchUserInfo = async () => {
       try {
-        const response = await axios.get("http://localhost:3001/me", {
+        const response = await axios.get("http://localhost:3001/users/me", {
           headers: { Authorization: `Bearer ${token}` },
         });
         setUser(response.data);
@@ -36,7 +38,7 @@ function Perfil() {
 
     try {
       await axios.put(
-        "http://localhost:3001/update-password",
+        "http://localhost:3001/users/update-password",
         { currentPassword, newPassword },
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -49,6 +51,10 @@ function Perfil() {
     }
   };
 
+  const handlePaymentSuccess = () => {
+    alert("Usuário agora é premium!");
+    setShowPaymentForm(false);
+  };
   return (
     <div
       style={{
@@ -180,6 +186,35 @@ function Perfil() {
               </p>
             )}
           </div>
+          <div
+            style={{
+              marginTop: "1.5rem",
+              fontSize: "1.2rem",
+              fontWeight: "500",
+            }}
+          >
+            Por apenas <strong>5 reais por mês</strong>, você pode criar mais de
+            5 projetos e tchananã!
+          </div>
+          {!showPaymentForm && (
+            <button
+              onClick={() => setShowPaymentForm(true)}
+              style={{ marginTop: "1rem" }}
+            >
+              Fazer Upgrade para Premium
+            </button>
+          )}
+          {showPaymentForm && (
+            <>
+              <PaymentModule onPaymentSuccess={handlePaymentSuccess} />
+              <button
+                onClick={() => setShowPaymentForm(false)}
+                style={{ marginTop: "1rem" }}
+              >
+                Cancelar
+              </button>
+            </>
+          )}
         </div>
       </div>
     </div>

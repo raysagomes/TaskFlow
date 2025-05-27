@@ -29,3 +29,9 @@ Thumbs.db
 
 # Coverage reports
 coverage/
+
+# Ignora todos os arquivos dentro de backend/uploads
+/backend/uploads/*
+
+# Mas não ignora a própria pasta
+!/backend/uploads/.gitkeep

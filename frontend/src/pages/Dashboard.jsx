@@ -26,7 +26,7 @@ export default function Dashboard() {
 
       try {
         const res = await axios.get(
-          `http://localhost:3001/entity/${user.entityId}/data`,
+          `http://localhost:3001/users/entity/${user.entityId}/data`,
           {
             headers: { Authorization: `Bearer ${user.token}` },
           }
